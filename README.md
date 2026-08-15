@@ -6,10 +6,10 @@ La aplicación incluye actualmente:
 
 - Dashboard de campaña y progreso persistente en el navegador.
 - Ruta progresiva de 10 módulos y más de 60 lecciones, comenzando con qué es Wireshark.
-- Primer módulo desarrollado: instalación segura, modelo de captura, interfaz, primer tráfico y PCAP/PCAPNG.
+- Los 10 módulos están redactados: fundamentos, anatomía, filtros, workflow, TCP, servicios, web/TLS, captura, performance y forense.
 - Catálogo navegable con búsqueda, objetivos, duración y progreso por lección.
 - Diez laboratorios numerados e integrados como cierre de cada módulo.
-- **Lab 01: Tu primera captura** desarrollado para cerrar fundamentos; **La retransmisión impostora** permanece como Lab 05 de TCP.
+- Cada lab incluye briefing, filtro inicial, traza guiada, preguntas con explicación y un PCAP sintético descargable.
 - Visor didáctico de paquetes, pistas y validación inmediata.
 - Diseño responsive para escritorio, tablet y móvil.
 - Escenario Docker opcional para generar tráfico local.
@@ -164,11 +164,11 @@ Las capturas generadas no se versionan para evitar publicar tráfico local por a
 
 ## Política de capturas del curso
 
-- El único archivo PCAP versionado actualmente es `public/captures/module-01-first-capture.pcap`.
-- Es sintético, se genera con `scripts/generate-lab01-pcap.py` y utiliza direcciones reservadas para documentación.
-- SHA-256: `03946b9a1924b0a85a87cecf38abb8b11c611b759b08a3ed1613f58398fc7614`.
+- Cada laboratorio incluye un PCAP sintético descargable: `lab-01.pcap` a `lab-10.pcap`.
+- Se generan offline con `scripts/generate-course-pcaps.py`; el script nunca abre interfaces de red.
+- Utilizan direcciones reservadas para documentación, MAC ficticias y dominios `.example`.
 - Las capturas personales permanecen ignoradas por Git mediante `*.pcap` y `*.pcapng`.
-- Los laboratorios sin material terminado aparecen explícitamente como **Próximamente**. No hace falta buscar PCAP externos.
+- `npm run validate:content` comprueba las 61 lecciones y los diez archivos antes del build.
 
 ## Seguridad de captura
 
@@ -191,7 +191,7 @@ Las capturas generadas no se versionan para evitar publicar tráfico local por a
 9. Performance real.
 10. Network forensics.
 
-Cada módulo termina con un laboratorio. El contenido detallado seguirá creciendo sin alterar esta progresión.
+Cada módulo termina con un laboratorio reproducible. Las 61 lecciones tienen contenido específico y el validador evita publicar lecciones vacías o capturas faltantes.
 
 ## Licencia
 

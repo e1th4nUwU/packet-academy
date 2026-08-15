@@ -12,3 +12,5 @@ captures/generated/
 
 # Única captura versionada: muestra sintética generada por scripts/
 !public/captures/module-01-first-capture.pcap
+
+!public/captures/lab-*.pcap
