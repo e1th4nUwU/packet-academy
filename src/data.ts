@@ -4,6 +4,7 @@ export type LessonBlock =
   | { type: 'text'; title?: string; body: string }
   | { type: 'callout'; title: string; body: string }
   | { type: 'code'; label: string; value: string }
+  | { type: 'download'; label: string; body: string; href: string; meta: string }
   | { type: 'checklist'; title: string; items: string[] }
 
 export type Lesson = {
@@ -63,27 +64,33 @@ export const modules: CourseModule[] = [
           { type: 'callout', title: 'Privacidad', body: 'Un PCAP puede contener dominios, nombres internos, cookies, tokens, mensajes o credenciales. Captura solamente sistemas autorizados y revisa el archivo antes de compartirlo.' },
           { type: 'checklist', title: 'Checklist del entorno', items: ['Wireshark abre sin privilegios elevados', 'Dumpcap enumera interfaces', 'Existe una carpeta separada para PCAP', 'La hora del sistema está sincronizada', 'Conoces el alcance autorizado'] },
         ], 18),
-      lesson('interface-tour', '01.04', 'Tour por la interfaz', 'Domina las tres vistas principales sin perderte entre cientos de campos.',
-        ['Usar Packet List, Details y Bytes', 'Personalizar columnas', 'Relacionar selección y resaltado'], [
+      lesson('interface-tour', '01.04', 'Tour por la interfaz', 'Ubica los controles y aprende a elegir la interfaz correcta antes de capturar.',
+        ['Usar Packet List, Details y Bytes', 'Elegir una interfaz', 'Relacionar selección y resaltado'], [
           { type: 'text', title: 'Tres paneles, una misma evidencia', body: 'Packet List resume cada frame. Packet Details presenta capas y campos disectados. Packet Bytes muestra el contenido original y resalta los bytes correspondientes al campo seleccionado.' },
-          { type: 'text', title: 'Navegación eficiente', body: 'Haz clic en un campo para localizar sus bytes; clic derecho permite aplicar ese campo como filtro, agregarlo como columna o copiar su valor. La barra de estado indica paquetes mostrados, descartados y perfil activo.' },
-          { type: 'code', label: 'PRIMER DISPLAY FILTER', value: 'dns || tcp.flags.syn == 1' },
-          { type: 'checklist', title: 'Personaliza desde el principio', items: ['Columna Delta time displayed', 'Columna TCP stream', 'Resolución de nombres bajo demanda', 'Perfil separado para troubleshooting'] },
+          { type: 'text', title: 'La pantalla inicial: ¿qué interfaz elijo?', body: 'Elige la interfaz por la que sale tu tráfico: normalmente Wi-Fi si estás conectado inalámbricamente o Ethernet si usas cable. La gráfica pequeña que se mueve junto al nombre confirma actividad. Loopback sirve únicamente para servicios en tu propia computadora; “any” existe en Linux y mezcla varias interfaces.' },
+          { type: 'code', label: 'IDENTIFICA LA RUTA ACTIVA SEGÚN TU SISTEMA', value: 'Linux:   ip route get 1.1.1.1\nWindows: Get-NetRoute -DestinationPrefix 0.0.0.0/0\nmacOS:   route get default' },
+          { type: 'callout', title: 'Para la siguiente lección', body: 'No necesitas capturar tráfico real si todavía no tienes permisos. La lección 5 incluye un PCAP sintético descargable y una ruta opcional para crear el tuyo.' },
+          { type: 'checklist', title: 'Ubica estos controles', items: ['Aleta azul: iniciar captura', 'Cuadro rojo: detener captura', 'Barra superior: display filter', 'Packet List, Packet Details y Packet Bytes', 'File → Open y File → Save As'] },
         ], 15),
-      lesson('first-capture', '01.05', 'Tu primera captura controlada', 'Genera tráfico conocido, captura poco tiempo y verifica cada evento.',
-        ['Elegir la interfaz correcta', 'Iniciar/detener una captura', 'Relacionar una acción con sus paquetes'], [
-          { type: 'text', title: 'Reduce la incertidumbre', body: 'Empieza una captura, genera una sola acción conocida —por ejemplo una consulta DNS— y deténla. Anota la hora. Un experimento pequeño enseña más que abrir diez minutos de ruido sin contexto.' },
-          { type: 'code', label: 'TRÁFICO CONTROLADO', value: 'nslookup example.com\ncurl -I https://example.com' },
-          { type: 'code', label: 'FILTRO PARA ENCONTRARLO', value: 'dns.qry.name == "example.com" || tls.handshake.extensions_server_name == "example.com"' },
-          { type: 'checklist', title: 'Evidencia que debes localizar', items: ['Consulta DNS', 'Respuesta DNS', 'SYN / SYN-ACK / ACK', 'Client Hello de TLS', 'Nombre SNI si está disponible'] },
-        ], 20),
-      lesson('pcap-files', '01.06', 'PCAP, PCAPNG y metadatos', 'Aprende qué conserva cada formato y cómo inspeccionarlo antes de abrir archivos grandes.',
-        ['Diferenciar PCAP y PCAPNG', 'Usar Capinfos', 'Conservar integridad y contexto'], [
-          { type: 'text', title: 'Dos contenedores', body: 'PCAP es simple y ampliamente compatible. PCAPNG admite múltiples interfaces, comentarios, estadísticas y metadatos adicionales. Para trabajos nuevos suele ser la mejor opción.' },
-          { type: 'code', label: 'TRIAGE SIN ABRIR LA GUI', value: 'capinfos capture.pcapng\ntshark -r capture.pcapng -q -z io,phs' },
-          { type: 'callout', title: 'Preserva el original', body: 'Trabaja sobre una copia, calcula un hash y documenta toda transformación con Editcap o Mergecap.' },
-          { type: 'checklist', title: 'Ficha mínima de una captura', items: ['Hash SHA-256', 'Inicio y duración', 'Número de paquetes', 'Interfaces', 'Capture filter y snap length', 'Zona horaria y responsable'] },
-        ], 14),
+      lesson('first-capture', '01.05', 'Tu primera captura controlada', 'Abre la captura incluida o genera una propia siguiendo pasos exactos.',
+        ['Abrir el PCAP incluido', 'Elegir la interfaz correcta', 'Iniciar, detener y guardar una captura'], [
+          { type: 'download', label: 'OPCIÓN A · RECOMENDADA PARA EMPEZAR', body: 'Captura sintética de seis paquetes. No contiene tráfico local ni datos personales.', href: '/captures/module-01-first-capture.pcap', meta: 'PCAP · 6 paquetes · SHA-256 03946b9a…7614' },
+          { type: 'text', title: 'Abre el archivo incluido', body: 'Pulsa Descargar PCAP, abre Wireshark y selecciona File → Open. Elige module-01-first-capture.pcap. Debes ver dos paquetes DNS, un handshake TCP de tres paquetes y un TLS Client Hello. Con esto puedes completar el ejercicio sin capturar nada de tu equipo.' },
+          { type: 'text', title: 'Opción B: genera tu propia captura', body: 'En la pantalla inicial, haz doble clic en Wi-Fi o Ethernet —la interfaz cuya gráfica muestre actividad—. Deja vacío el campo capture filter. Cuando comience la captura, abre otra terminal, ejecuta los comandos siguientes, vuelve a Wireshark y pulsa el cuadro rojo.' },
+          { type: 'code', label: 'GENERA DOS ACCIONES CONOCIDAS', value: 'nslookup example.com\ncurl -I https://example.com' },
+          { type: 'text', title: 'Encuentra y guarda el resultado', body: 'Pega el filtro de abajo en la barra superior y presiona Enter. Después usa File → Save As, selecciona PCAPNG y guarda el archivo como module-01-my-capture.pcapng fuera del repositorio. Si no aparecen paquetes, vuelve a la pantalla inicial y prueba la otra interfaz con actividad.' },
+          { type: 'code', label: 'DISPLAY FILTER — NO ES CAPTURE FILTER', value: 'dns.qry.name == "example.com" || tls.handshake.extensions_server_name == "example.com"' },
+          { type: 'checklist', title: 'Evidencia que debes localizar', items: ['Consulta DNS del cliente', 'Respuesta DNS con una dirección', 'SYN / SYN-ACK / ACK hacia 443', 'Client Hello de TLS', 'example.com dentro del campo SNI'] },
+          { type: 'callout', title: 'La captura propia es opcional', body: 'La ruta principal usa el PCAP incluido. Capturar en tu equipo solo sirve para practicar los controles de la interfaz.' },
+        ], 24),
+      lesson('pcap-files', '01.06', 'PCAP, PCAPNG y metadatos', 'Continúa con el archivo de la lección 5 y aprende a preservarlo e inspeccionarlo.',
+        ['Diferenciar PCAP y PCAPNG', 'Usar Capinfos sobre un archivo concreto', 'Conservar integridad y contexto'], [
+          { type: 'text', title: 'Continúa con el mismo archivo', body: 'Usa module-01-first-capture.pcap si elegiste la descarga, o module-01-my-capture.pcapng si hiciste tu captura. No necesitas obtener un tercer archivo.' },
+          { type: 'text', title: 'Dos contenedores', body: 'PCAP es simple y ampliamente compatible. PCAPNG admite múltiples interfaces, comentarios, estadísticas y metadatos adicionales. Para capturas nuevas suele ser la mejor opción; el ejemplo incluido usa PCAP para máxima compatibilidad.' },
+          { type: 'code', label: 'TRIAGE DEL ARCHIVO INCLUIDO — DESDE LA RAÍZ DEL PROYECTO', value: 'capinfos public/captures/module-01-first-capture.pcap\ntshark -r public/captures/module-01-first-capture.pcap -q -z io,phs' },
+          { type: 'callout', title: 'Preserva el original', body: 'Trabaja sobre una copia, calcula un hash y documenta toda transformación. Las capturas propias permanecen ignoradas por Git para evitar publicarlas por accidente.' },
+          { type: 'checklist', title: 'Ficha mínima de una captura', items: ['Origen: sintética incluida o propia', 'Hash SHA-256', 'Inicio y duración', 'Número de paquetes', 'Interfaz y capture filter', 'Zona horaria y responsable'] },
+        ], 16),
     ],
   },
   {
@@ -114,7 +121,7 @@ export const modules: CourseModule[] = [
     id: '04', title: 'Conversaciones y tiempo', eyebrow: 'Workflow', icon: SearchCheck,
     description: 'Triage, endpoints, streams, gráficas y una investigación reproducible.', lab: '¿Quién habló con quién?',
     lessons: [
-      lesson('triage','04.01','Triage de un PCAP desconocido','Empieza por alcance, duración, protocolos y participantes; no por paquetes aleatorios.',['Crear inventario','Priorizar flujos','Documentar hipótesis']),
+      lesson('triage','04.01','Triage de un PCAP desconocido','Aprende el método de triage que aplicarás cuando el módulo proporcione su captura de práctica.',['Crear inventario','Priorizar flujos','Documentar hipótesis']),
       lesson('endpoints','04.02','Endpoints y Conversations','Convierte millones de paquetes en una lista corta de relaciones.',['Usar estadísticas','Ordenar por bytes','Detectar outliers']),
       lesson('streams','04.03','Follow Stream con contexto','Reconstruye una conversación sin olvidar direcciones ni huecos.',['Seguir streams','Cambiar representación','Reconocer datos faltantes']),
       lesson('time-columns','04.04','Tiempo absoluto, relativo y delta','Elige la referencia temporal adecuada para cada pregunta.',['Configurar columnas','Medir delta','Correlacionar eventos']),
@@ -206,7 +213,7 @@ export const labs = modules.map((module, index) => ({
   title: module.lab ?? `Laboratorio ${module.id}`,
   moduleTitle: module.title,
   description: [
-    'Genera una consulta DNS y una conexión HTTPS controladas; después demuestra cada etapa dentro de tu propia captura.',
+    'Usa el PCAP sintético incluido —o genera uno opcional— y demuestra cada etapa de DNS, TCP y TLS.',
     'Desarma un frame desde sus metadatos hasta el payload y documenta dónde comienza cada capa.',
     'Resuelve una cacería de paquetes usando capture filters y display filters sin perder evidencia.',
     'Reduce un PCAP desconocido a endpoints, conversaciones, streams y una línea temporal.',

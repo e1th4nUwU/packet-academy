@@ -162,6 +162,14 @@ Las capturas generadas no se versionan para evitar publicar tráfico local por a
 | `npm run preview` | Sirve localmente el build de producción |
 | `npm run lint` | Ejecuta las reglas de calidad |
 
+## Política de capturas del curso
+
+- El único archivo PCAP versionado actualmente es `public/captures/module-01-first-capture.pcap`.
+- Es sintético, se genera con `scripts/generate-lab01-pcap.py` y utiliza direcciones reservadas para documentación.
+- SHA-256: `03946b9a1924b0a85a87cecf38abb8b11c611b759b08a3ed1613f58398fc7614`.
+- Las capturas personales permanecen ignoradas por Git mediante `*.pcap` y `*.pcapng`.
+- Los laboratorios sin material terminado aparecen explícitamente como **Próximamente**. No hace falta buscar PCAP externos.
+
 ## Seguridad de captura
 
 - Captura únicamente redes, sistemas y datos para los que tengas autorización.
