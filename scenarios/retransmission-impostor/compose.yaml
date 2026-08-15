@@ -1,0 +1,19 @@
+services:
+  server:
+    image: nginx:1.27-alpine
+    networks:
+      packet_lab:
+        ipv4_address: 10.20.0.21
+  client:
+    image: curlimages/curl:8.11.1
+    command: ["sh", "-c", "while true; do curl -s http://server/ >/dev/null; sleep 3; done"]
+    depends_on: [server]
+    networks:
+      packet_lab:
+        ipv4_address: 10.20.0.8
+networks:
+  packet_lab:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.20.0.0/24
