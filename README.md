@@ -5,8 +5,10 @@ Academia web interactiva para aprender análisis de tráfico con Wireshark media
 La aplicación incluye actualmente:
 
 - Dashboard de campaña y progreso persistente en el navegador.
-- Lección interactiva sobre retransmisiones y artefactos de captura.
-- Laboratorio guiado **La retransmisión impostora**.
+- Ruta progresiva de 10 módulos y más de 60 lecciones, comenzando con qué es Wireshark.
+- Primer módulo desarrollado: instalación segura, modelo de captura, interfaz, primer tráfico y PCAP/PCAPNG.
+- Catálogo navegable con búsqueda, objetivos, duración y progreso por lección.
+- Laboratorio guiado **La retransmisión impostora**, ubicado en el módulo avanzado de TCP.
 - Visor didáctico de paquetes, pistas y validación inmediata.
 - Diseño responsive para escritorio, tablet y móvil.
 - Escenario Docker opcional para generar tráfico local.
@@ -167,14 +169,20 @@ Las capturas generadas no se versionan para evitar publicar tráfico local por a
 - No publiques capturas corporativas o personales sin sanitizarlas.
 - Usa `editcap` para recortar una captura y conserva siempre el original fuera del repositorio.
 
-## Roadmap
+## Programa del curso
 
-- TCP: SACK, zero window, resets y análisis de RTT.
-- Patologías de captura: SPAN duplicado, offloading y asimetría.
-- DNS, HTTP/2, TLS y QUIC.
-- Performance: network time frente a server time.
-- Network forensics y construcción de timelines.
-- Integración local controlada con TShark.
+1. Conoce Wireshark.
+2. Leer paquetes.
+3. Filtros sin sufrimiento.
+4. Conversaciones y tiempo.
+5. TCP bajo el microscopio.
+6. Servicios esenciales.
+7. Web y cifrado.
+8. Capturar bien.
+9. Performance real.
+10. Network forensics.
+
+Cada módulo termina con un laboratorio. El contenido detallado seguirá creciendo sin alterar esta progresión.
 
 ## Licencia
 
