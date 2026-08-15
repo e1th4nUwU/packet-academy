@@ -199,6 +199,43 @@ export const modules: CourseModule[] = [
 
 export const allLessons = modules.flatMap(module => module.lessons.map(item => ({ ...item, moduleId: module.id, moduleTitle: module.title })))
 
+export const labs = modules.map((module, index) => ({
+  id: `lab-${module.id}`,
+  moduleId: module.id,
+  number: module.id,
+  title: module.lab ?? `Laboratorio ${module.id}`,
+  moduleTitle: module.title,
+  description: [
+    'Genera una consulta DNS y una conexión HTTPS controladas; después demuestra cada etapa dentro de tu propia captura.',
+    'Desarma un frame desde sus metadatos hasta el payload y documenta dónde comienza cada capa.',
+    'Resuelve una cacería de paquetes usando capture filters y display filters sin perder evidencia.',
+    'Reduce un PCAP desconocido a endpoints, conversaciones, streams y una línea temporal.',
+    'El NOC reporta pérdida. Decide si la red es culpable o si la captura está mintiendo.',
+    'Diagnostica un caso donde la conectividad existe, pero DNS y servicios auxiliares fallan.',
+    'Descompón la carga de una página entre DNS, TCP, TLS, servidor y transferencia.',
+    'Identifica duplicación, offloading, asimetría y drops dentro de un PCAP contaminado.',
+    'Separa tiempo de red, cliente y servidor en una disputa de performance.',
+    'Construye un timeline forense y presenta conclusiones con límites y evidencia.',
+  ][index],
+  difficulty: index < 2 ? 'Fundamentos' : index < 6 ? 'Intermedio' : 'Avanzado',
+  available: index === 0 || index === 4,
+}))
+
+export const introPackets = [
+  { frame: 1, time: '0.000', source: '192.168.1.20', destination: '192.168.1.1', info: 'Standard query A example.com', kind: 'data' },
+  { frame: 2, time: '0.018', source: '192.168.1.1', destination: '192.168.1.20', info: 'Standard query response A 93.184.216.34', kind: 'ack' },
+  { frame: 3, time: '0.021', source: '192.168.1.20', destination: '93.184.216.34', info: '51544 → 443 [SYN]', kind: 'syn' },
+  { frame: 4, time: '0.058', source: '93.184.216.34', destination: '192.168.1.20', info: '443 → 51544 [SYN, ACK]', kind: 'syn' },
+  { frame: 5, time: '0.058', source: '192.168.1.20', destination: '93.184.216.34', info: '51544 → 443 [ACK]', kind: 'ack' },
+  { frame: 6, time: '0.061', source: '192.168.1.20', destination: '93.184.216.34', info: 'TLS Client Hello (SNI=example.com)', kind: 'data' },
+]
+
+export const introQuiz = [
+  { question: '¿Qué acción ocurrió primero?', answers: ['El handshake TCP', 'La consulta DNS', 'El Client Hello', 'La respuesta HTTP'], correct: 1, explanation: 'El frame 1 consulta la dirección de example.com antes de intentar la conexión.' },
+  { question: '¿Qué frame inicia la conexión TCP?', answers: ['1', '2', '3', '6'], correct: 2, explanation: 'El frame 3 contiene el SYN inicial del cliente hacia el puerto 443.' },
+  { question: '¿Qué demuestra el frame 6 aunque TLS esté cifrado?', answers: ['El contenido de la página', 'La contraseña del usuario', 'El hostname indicado mediante SNI', 'La clave privada'], correct: 2, explanation: 'El Client Hello puede exponer SNI y otros metadatos aunque los datos de aplicación estén cifrados.' },
+]
+
 export const packets = [
   { frame: 41, time: '0.000', source: '10.20.0.8', destination: '10.20.0.21', info: '51944 → 443 [SYN] Seq=0 Win=64240', kind: 'syn' },
   { frame: 42, time: '0.021', source: '10.20.0.21', destination: '10.20.0.8', info: '443 → 51944 [SYN, ACK] Seq=0 Ack=1', kind: 'syn' },

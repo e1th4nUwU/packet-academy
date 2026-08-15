@@ -8,7 +8,8 @@ La aplicación incluye actualmente:
 - Ruta progresiva de 10 módulos y más de 60 lecciones, comenzando con qué es Wireshark.
 - Primer módulo desarrollado: instalación segura, modelo de captura, interfaz, primer tráfico y PCAP/PCAPNG.
 - Catálogo navegable con búsqueda, objetivos, duración y progreso por lección.
-- Laboratorio guiado **La retransmisión impostora**, ubicado en el módulo avanzado de TCP.
+- Diez laboratorios numerados e integrados como cierre de cada módulo.
+- **Lab 01: Tu primera captura** desarrollado para cerrar fundamentos; **La retransmisión impostora** permanece como Lab 05 de TCP.
 - Visor didáctico de paquetes, pistas y validación inmediata.
 - Diseño responsive para escritorio, tablet y móvil.
 - Escenario Docker opcional para generar tráfico local.

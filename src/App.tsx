@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, CircleHelp, Clipboard, Download, FlaskConical, Home, Menu, Moon, Network, Play, Search, Settings, Sun, TerminalSquare, X } from 'lucide-react'
-import { allLessons, modules, packets, quiz, type Lesson as LessonType } from './data'
+import { allLessons, introPackets, introQuiz, labs, modules, packets, quiz, type Lesson as LessonType } from './data'
 
-type View = 'dashboard' | 'catalog' | 'lesson' | 'lab'
+type View = 'dashboard' | 'catalog' | 'lesson' | 'labs' | 'lab'
 type Progress = { completed: string[]; xp: number }
 const defaultProgress: Progress = { completed: [], xp: 0 }
 const storageKey = 'packet-progress-v3'
@@ -12,6 +12,7 @@ function App() {
   const [dark, setDark] = useState(true)
   const [mobileNav, setMobileNav] = useState(false)
   const [lessonId, setLessonId] = useState('what-is-wireshark')
+  const [labId, setLabId] = useState('lab-01')
   const [progress, setProgress] = useState<Progress>(() => {
     try { return JSON.parse(localStorage.getItem(storageKey) || '') } catch { return defaultProgress }
   })
@@ -20,11 +21,25 @@ function App() {
   useEffect(() => { window.scrollTo(0, 0) }, [view, lessonId])
 
   const openLesson = (id: string) => { setLessonId(id); setView('lesson'); setMobileNav(false) }
+  const openLab = (id: string) => { setLabId(id); setView('lab'); setMobileNav(false) }
   const complete = (id: string, xp: number) => setProgress(p => p.completed.includes(id) ? p : { completed: [...p.completed, id], xp: p.xp + xp })
   const lesson = allLessons.find(item => item.id === lessonId) ?? allLessons[0]
-  const nextIndex = allLessons.findIndex(item => item.id === lesson.id) + 1
-  const nextLesson = allLessons[nextIndex]
-  const completeLesson = () => { complete(lesson.id, lesson.xp); if (nextLesson) openLesson(nextLesson.id); else setView('dashboard') }
+  const currentModule = modules.find(module => module.id === lesson.moduleId) ?? modules[0]
+  const moduleLessonIndex = currentModule.lessons.findIndex(item => item.id === lesson.id)
+  const nextModuleLesson = currentModule.lessons[moduleLessonIndex + 1]
+  const completeLesson = () => {
+    complete(lesson.id, lesson.xp)
+    if (nextModuleLesson) openLesson(nextModuleLesson.id)
+    else openLab(`lab-${currentModule.id}`)
+  }
+  const completeLab = () => {
+    complete(labId, 150)
+    const lab = labs.find(item => item.id === labId)
+    const moduleIndex = modules.findIndex(item => item.id === lab?.moduleId)
+    const nextModule = modules[moduleIndex + 1]
+    if (nextModule) openLesson(nextModule.lessons[0].id)
+    else setView('dashboard')
+  }
   const total = allLessons.length
   const percent = Math.round(progress.completed.length / total * 100)
 
@@ -35,7 +50,7 @@ function App() {
       <nav>
         <NavItem icon={<Home />} label="Campaña" active={view === 'dashboard'} onClick={() => { setView('dashboard'); setMobileNav(false) }} />
         <NavItem icon={<BookOpen />} label="Curso completo" active={view === 'catalog' || view === 'lesson'} badge={String(total)} onClick={() => { setView('catalog'); setMobileNav(false) }} />
-        <NavItem icon={<FlaskConical />} label="Laboratorios" active={view === 'lab'} badge="10" onClick={() => { setView('lab'); setMobileNav(false) }} />
+        <NavItem icon={<FlaskConical />} label="Laboratorios" active={view === 'labs' || view === 'lab'} badge="10" onClick={() => { setView('labs'); setMobileNav(false) }} />
         <NavItem icon={<TerminalSquare />} label="Field notes" />
       </nav>
       <div className="sidebar-bottom">
@@ -47,9 +62,10 @@ function App() {
     <main>
       <header><button className="mobile-menu" onClick={() => setMobileNav(true)}><Menu /></button><button className="command" onClick={() => setView('catalog')}><Search /><span>Busca entre {total} lecciones…</span><kbd>⌘ K</kbd></button><div className="header-actions"><span className="streak"><b>{percent}%</b> completado</span><button className="icon-button" onClick={() => setDark(d => !d)}>{dark ? <Sun /> : <Moon />}</button><span className="avatar">CC</span></div></header>
       {view === 'dashboard' && <Dashboard openLesson={openLesson} setView={setView} progress={progress} percent={percent} />}
-      {view === 'catalog' && <Catalog openLesson={openLesson} progress={progress} />}
+      {view === 'catalog' && <Catalog openLesson={openLesson} openLab={openLab} progress={progress} />}
+      {view === 'labs' && <LabsCatalog openLab={openLab} progress={progress} />}
       {view === 'lesson' && <Lesson lesson={lesson} done={progress.completed.includes(lesson.id)} moduleCompleted={modules.find(m => m.id === lesson.moduleId)?.lessons.filter(l => progress.completed.includes(l.id)).length ?? 0} onComplete={completeLesson} onCatalog={() => setView('catalog')} onSelect={openLesson} />}
-      {view === 'lab' && <Lab onComplete={() => complete('lab-retransmission', 150)} done={progress.completed.includes('lab-retransmission')} />}
+      {view === 'lab' && <Lab labId={labId} onCatalog={() => setView('labs')} onComplete={completeLab} done={progress.completed.includes(labId)} />}
     </main>
   </div>
 }
@@ -68,34 +84,44 @@ function Dashboard({ openLesson, setView, progress, percent }: { openLesson: (id
   </div>
 }
 
-function Catalog({ openLesson, progress }: { openLesson:(id:string)=>void; progress:Progress }) {
+function Catalog({ openLesson, openLab, progress }: { openLesson:(id:string)=>void; openLab:(id:string)=>void; progress:Progress }) {
   const [query,setQuery]=useState('')
   const matches=(lesson:LessonType)=>`${lesson.title} ${lesson.summary}`.toLowerCase().includes(query.toLowerCase())
   return <div className="page catalog-page"><div className="catalog-hero"><span className="eyebrow">PROGRAMA COMPLETO</span><h1>Tu ruta de aprendizaje</h1><p>10 módulos progresivos: fundamentos, captura, protocolos, troubleshooting y forense.</p><label className="catalog-search"><Search/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar: DNS, filtros, TCP, TLS…"/></label></div>
-    <div className="curriculum">{modules.map(module=>{const Icon=module.icon;const visible=module.lessons.filter(matches);if(!visible.length)return null;const count=module.lessons.filter(l=>progress.completed.includes(l.id)).length;return <section className="curriculum-module" key={module.id}><div className="curriculum-heading"><span className="module-icon"><Icon/></span><div><span className="eyebrow">MÓDULO {module.id} · {module.eyebrow}</span><h2>{module.title}</h2><p>{module.description}</p></div><span className="module-count">{count}/{module.lessons.length}</span></div><div className="lesson-list">{visible.map(item=><button key={item.id} onClick={()=>openLesson(item.id)} className={progress.completed.includes(item.id)?'done':''}><span className="lesson-status">{progress.completed.includes(item.id)?<Check/>:item.number}</span><span><b>{item.title}</b><small>{item.summary}</small></span><em>{item.minutes} min · {item.xp} XP</em><ChevronRight/></button>)}</div><div className="module-lab"><FlaskConical/><span><small>LABORATORIO DEL MÓDULO</small><b>{module.lab}</b></span></div></section>})}</div>
+    <div className="curriculum">{modules.map(module=>{const Icon=module.icon;const visible=module.lessons.filter(matches);if(!visible.length)return null;const count=module.lessons.filter(l=>progress.completed.includes(l.id)).length;return <section className="curriculum-module" key={module.id}><div className="curriculum-heading"><span className="module-icon"><Icon/></span><div><span className="eyebrow">MÓDULO {module.id} · {module.eyebrow}</span><h2>{module.title}</h2><p>{module.description}</p></div><span className="module-count">{count}/{module.lessons.length}</span></div><div className="lesson-list">{visible.map(item=><button key={item.id} onClick={()=>openLesson(item.id)} className={progress.completed.includes(item.id)?'done':''}><span className="lesson-status">{progress.completed.includes(item.id)?<Check/>:module.lessons.indexOf(item)+1}</span><span><b>{item.title}</b><small>{item.summary}</small></span><em>{item.minutes} min · {item.xp} XP</em><ChevronRight/></button>)}</div><button className="module-lab" onClick={()=>openLab(`lab-${module.id}`)}><FlaskConical/><span><small>LAB {module.id} · CIERRE DEL MÓDULO</small><b>{module.lab}</b></span><ChevronRight/></button></section>})}</div>
   </div>
+}
+
+function LabsCatalog({ openLab, progress }: { openLab:(id:string)=>void; progress:Progress }) {
+  return <div className="page labs-catalog"><div className="catalog-hero"><span className="eyebrow">PRÁCTICA GUIADA</span><h1>Laboratorios</h1><p>Cada módulo termina con un caso que aplica exactamente lo que acabas de estudiar. Sigue el orden 01 → 10.</p></div><div className="labs-grid">{labs.map(lab=><button key={lab.id} className={`lab-card ${lab.available?'available':'planned'}`} onClick={()=>openLab(lab.id)}><div className="lab-card-top"><span>LAB {lab.number}</span><em>{lab.difficulty}</em></div><small>MÓDULO {lab.moduleId} · {lab.moduleTitle}</small><h2>{lab.title}</h2><p>{lab.description}</p><div className="lab-card-bottom"><span>{progress.completed.includes(lab.id)?<><Check/> Completado</>:lab.available?'Disponible':'Próximamente'}</span><ArrowRight/></div></button>)}</div></div>
 }
 
 function Lesson({ lesson, done, moduleCompleted, onComplete, onCatalog, onSelect }: { lesson: typeof allLessons[number]; done:boolean; moduleCompleted:number; onComplete:()=>void; onCatalog:()=>void; onSelect:(id:string)=>void }) {
   const [copied,setCopied]=useState('')
   const module=modules.find(m=>m.id===lesson.moduleId)!
   const copy=(value:string)=>{navigator.clipboard.writeText(value);setCopied(value);setTimeout(()=>setCopied(''),1200)}
-  return <div className="page lesson-page"><button className="back" onClick={onCatalog}><ArrowLeft/> Módulo {module.id} · {module.title}</button><div className="lesson-layout"><article className="lesson-content"><span className="eyebrow">LECCIÓN {lesson.number} · {lesson.minutes} MIN · +{lesson.xp} XP</span><h1>{lesson.title}</h1><p className="lead">{lesson.summary}</p><div className="learning-objectives"><span>OBJETIVOS</span>{lesson.objectives.map(x=><p key={x}><Check/>{x}</p>)}</div>
+  return <div className="page lesson-page"><button className="back" onClick={onCatalog}><ArrowLeft/> Módulo {module.id} · {module.title}</button><div className="lesson-layout"><article className="lesson-content"><span className="eyebrow">LECCIÓN {module.lessons.findIndex(item=>item.id===lesson.id)+1} DE {module.lessons.length} · {lesson.minutes} MIN · +{lesson.xp} XP</span><h1>{lesson.title}</h1><p className="lead">{lesson.summary}</p><div className="learning-objectives"><span>OBJETIVOS</span>{lesson.objectives.map(x=><p key={x}><Check/>{x}</p>)}</div>
     {lesson.blocks.map((block,i)=>{
       if(block.type==='text')return <section key={i}>{block.title&&<h2>{block.title}</h2>}<p>{block.body}</p></section>
       if(block.type==='callout')return <div className="callout" key={i}><CircleHelp/><div><b>{block.title}</b><p>{block.body}</p></div></div>
       if(block.type==='code')return <button className="filter-box" key={i} onClick={()=>copy(block.value)}><span><small>{block.label}</small><code>{block.value}</code></span>{copied===block.value?<Check/>:<Clipboard/>}</button>
       return <div className="checklist" key={i}><h3>{block.title}</h3>{block.items.map(x=><p key={x}><Check/>{x}</p>)}</div>
     })}
-    <div className="lesson-complete"><button className="primary" onClick={onComplete}>{done?'Siguiente lección':'Marcar completa y continuar'} <ArrowRight/></button><small>{done?'Esta lección ya está completada.':'El progreso se guarda en este navegador.'}</small></div></article>
-    <aside className="lesson-index"><span className="eyebrow">MÓDULO {module.id}</span>{module.lessons.map(item=><button key={item.id} onClick={()=>onSelect(item.id)} className={item.id===lesson.id?'active':''}>{item.number} · {item.title}</button>)}<hr/><span className="eyebrow">PROGRESO DEL MÓDULO</span><div className={`circle-progress ${moduleCompleted ? 'complete':''}`}>{Math.round(moduleCompleted/module.lessons.length*100)}%</div><small>{moduleCompleted} de {module.lessons.length} lecciones</small></aside></div></div>
+    <div className="lesson-complete"><button className="primary" onClick={onComplete}>{done ? (module.lessons[module.lessons.length-1]?.id===lesson.id?'Ir al laboratorio':'Siguiente lección') : (module.lessons[module.lessons.length-1]?.id===lesson.id?'Completar e iniciar Lab '+module.id:'Marcar completa y continuar')} <ArrowRight/></button><small>{done?'Esta lección ya está completada.':'El progreso se guarda en este navegador.'}</small></div></article>
+    <aside className="lesson-index"><span className="eyebrow">MÓDULO {module.id}</span>{module.lessons.map((item,index)=><button key={item.id} onClick={()=>onSelect(item.id)} className={item.id===lesson.id?'active':''}>{index+1} · {item.title}</button>)}<hr/><span className="eyebrow">PROGRESO DEL MÓDULO</span><div className={`circle-progress ${moduleCompleted ? 'complete':''}`}>{Math.round(moduleCompleted/module.lessons.length*100)}%</div><small>{moduleCompleted} de {module.lessons.length} lecciones</small></aside></div></div>
 }
 
-function Lab({ onComplete, done }: { onComplete:()=>void; done:boolean }) {
-  const [step,setStep]=useState(0);const [selected,setSelected]=useState<number|null>(null);const [answered,setAnswered]=useState<number[]>([]);const [hint,setHint]=useState(false);const current=quiz[step]
+function Lab({ labId, onComplete, done, onCatalog }: { labId:string; onComplete:()=>void; done:boolean; onCatalog:()=>void }) {
+  const lab=labs.find(item=>item.id===labId) ?? labs[0]
+  const interactive=lab.id==='lab-01'||lab.id==='lab-05'
+  const questions=lab.id==='lab-01'?introQuiz:quiz
+  const rows=lab.id==='lab-01'?introPackets:packets
+  const [step,setStep]=useState(0);const [selected,setSelected]=useState<number|null>(null);const [answered,setAnswered]=useState<number[]>([]);const [hint,setHint]=useState(false)
+  const current=questions[step]
   const choose=(i:number)=>{setSelected(i);if(i===current.correct)setAnswered(a=>[...a.filter(x=>x!==step),step])}
-  const next=()=>{if(step<quiz.length-1){setStep(s=>s+1);setSelected(null);setHint(false)}else onComplete()}
-  return <div className="page lab-page"><div className="lab-header"><div><span className="eyebrow">LAB 05 · TCP BAJO EL MICROSCOPIO</span><h1>La retransmisión impostora</h1><p>Este caso pertenece al módulo 05. Puedes explorarlo ahora, pero la ruta recomienda completar primero los fundamentos.</p></div><div className="lab-score"><b>{answered.length}/{quiz.length}</b><span>evidencias</span></div></div><div className="lab-layout"><section className="packet-panel"><div className="panel-title"><span><i/> incident-05.pcapng</span><span>7 paquetes · muestra didáctica</span></div><div className="packet-head"><span>No.</span><span>Time</span><span>Source → Destination</span><span>Info</span></div>{packets.map(p=><div className={`packet-row ${p.kind}`} key={p.frame}><span>{p.frame}</span><span>{p.time}</span><span>{p.source} → {p.destination}</span><span>{p.info}</span></div>)}<div className="packet-footer"><code>tcp.stream == 0</code><button><Clipboard/></button></div></section><aside className="investigation"><div className="case-tabs"><button className="active">Investigar</button><button>Notas</button></div><span className="eyebrow">EVIDENCIA {step+1} DE {quiz.length}</span><h2>{current.question}</h2><div className="answers">{current.answers.map((a,i)=><button key={a} className={selected===i?(i===current.correct?'correct':'wrong'):''} onClick={()=>choose(i)}><span>{String.fromCharCode(65+i)}</span>{a}{selected===i&&(i===current.correct?<Check/>:<X/>)}</button>)}</div>{selected!==null&&<div className={selected===current.correct?'feedback success':'feedback'}><b>{selected===current.correct?'Evidencia confirmada':'Todavía no'}</b><p>{selected===current.correct?current.explanation:'Mira los tiempos y piensa si TCP podría reaccionar tan rápido.'}</p></div>}<button className="hint" onClick={()=>setHint(h=>!h)}><CircleHelp/> {hint?'Una reacción de TCP necesita retorno o un temporizador.':'Solicitar pista'}</button><button className="primary lab-next" disabled={selected!==current.correct} onClick={next}>{step===quiz.length-1?(done?'Completado':'Cerrar caso · +150 XP'):'Siguiente evidencia'} <ArrowRight/></button></aside></div><div className="lab-tools"><div><Download/><span><b>PCAP de práctica</b><small>Muestra guiada incluida.</small></span></div><div><TerminalSquare/><span><b>Filtro de arranque</b><code>tcp.analysis.retransmission</code></span></div></div></div>
+  const next=()=>{if(step<questions.length-1){setStep(v=>v+1);setSelected(null);setHint(false)}else onComplete()}
+  if(!interactive)return <div className="page lab-preview"><button className="back" onClick={onCatalog}><ArrowLeft/> Todos los laboratorios</button><div className="preview-card"><span className="eyebrow">LAB {lab.number} · MÓDULO {lab.moduleId}</span><h1>{lab.title}</h1><p>{lab.description}</p><div className="callout"><FlaskConical/><div><b>En preparación</b><p>El lugar de este laboratorio ya está integrado en la ruta. Su escenario y PCAP se añadirán al desarrollar el contenido detallado de este módulo.</p></div></div><button className="secondary" onClick={onCatalog}>Volver al catálogo</button></div></div>
+  return <div className="page lab-page"><button className="back" onClick={onCatalog}><ArrowLeft/> Todos los laboratorios</button><div className="lab-header"><div><span className="eyebrow">LAB {lab.number} · MÓDULO {lab.moduleId} · {lab.difficulty}</span><h1>{lab.title}</h1><p>{lab.description}</p></div><div className="lab-score"><b>{answered.length}/{questions.length}</b><span>evidencias</span></div></div><div className="lab-layout"><section className="packet-panel"><div className="panel-title"><span><i/> lab-{lab.number}.pcapng</span><span>{rows.length} paquetes · muestra didáctica</span></div><div className="packet-head"><span>No.</span><span>Time</span><span>Source → Destination</span><span>Info</span></div>{rows.map(p=><div className={`packet-row ${p.kind}`} key={p.frame}><span>{p.frame}</span><span>{p.time}</span><span>{p.source} → {p.destination}</span><span>{p.info}</span></div>)}<div className="packet-footer"><code>{lab.id==='lab-01'?'dns || tcp.flags.syn == 1 || tls.handshake.type == 1':'tcp.stream == 0'}</code><button><Clipboard/></button></div></section><aside className="investigation"><div className="case-tabs"><button className="active">Investigar</button><button>Notas</button></div><span className="eyebrow">EVIDENCIA {step+1} DE {questions.length}</span><h2>{current.question}</h2><div className="answers">{current.answers.map((answer,index)=><button key={answer} className={selected===index?(index===current.correct?'correct':'wrong'):''} onClick={()=>choose(index)}><span>{String.fromCharCode(65+index)}</span>{answer}{selected===index&&(index===current.correct?<Check/>:<X/>)}</button>)}</div>{selected!==null&&<div className={selected===current.correct?'feedback success':'feedback'}><b>{selected===current.correct?'Evidencia confirmada':'Todavía no'}</b><p>{selected===current.correct?current.explanation:'Vuelve a la lista de paquetes y ordena los eventos por tiempo.'}</p></div>}<button className="hint" onClick={()=>setHint(value=>!value)}><CircleHelp/> {hint?'Busca el primer frame que inicia la acción descrita.':'Solicitar pista'}</button><button className="primary lab-next" disabled={selected!==current.correct} onClick={next}>{step===questions.length-1?(done?'Continuar al siguiente módulo':'Completar Lab '+lab.number+' · +150 XP'):'Siguiente evidencia'} <ArrowRight/></button></aside></div><div className="lab-tools"><div><Download/><span><b>PCAP de práctica</b><small>Muestra guiada incluida en la interfaz.</small></span></div><div><TerminalSquare/><span><b>Integrado al módulo</b><small>Completa las lecciones de {lab.moduleTitle} antes del caso.</small></span></div></div></div>
 }
 
 export default App
