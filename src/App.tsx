@@ -15,8 +15,13 @@ function App() {
     try { return JSON.parse(localStorage.getItem('packet-progress') || '') } catch { return defaultProgress }
   })
 
-  useEffect(() => localStorage.setItem('packet-progress', JSON.stringify(progress)), [progress])
-  useEffect(() => window.scrollTo(0, 0), [view])
+  useEffect(() => {
+    localStorage.setItem('packet-progress', JSON.stringify(progress))
+  }, [progress])
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [view])
 
   const complete = (id: string, xp: number) => setProgress(p => p.completed.includes(id) ? p : { completed: [...p.completed, id], xp: p.xp + xp })
 
